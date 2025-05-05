@@ -5,11 +5,10 @@ import (
 )
 
 type provider struct {
-	name        string
-	constructor reflect.Value
-	returnType  reflect.Type
-	paramTypes  []reflect.Type
-	initFunc    func(args []any) (any, error)
+	name       string
+	returnType reflect.Type
+	paramTypes []reflect.Type
+	initFunc   func(args []any) (any, error)
 }
 
 func newProvider(constructor any) *provider {
@@ -48,10 +47,9 @@ func newProvider(constructor any) *provider {
 	}
 
 	return &provider{
-		name:        ctorType.String(),
-		constructor: ctor,
-		returnType:  retType,
-		paramTypes:  paramTypes,
-		initFunc:    initFunc,
+		name:       ctorType.String(),
+		returnType: retType,
+		paramTypes: paramTypes,
+		initFunc:   initFunc,
 	}
 }

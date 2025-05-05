@@ -37,18 +37,29 @@ func (c *Container) Resolve(target any) error {
 	defer c.mu.Unlock()
 
 	ptrVal := reflect.ValueOf(target)
-	if ptrVal.Kind() != reflect.Ptr || ptrVal.Elem().Kind() != reflect.Interface {
-		return fmt.Errorf("expected pointer to interface")
+	if ptrVal.Kind() != reflect.Ptr {
+		return fmt.Errorf("expected a pointer")
 	}
 
-	ifaceType := ptrVal.Elem().Type()
+	elemType := ptrVal.Elem().Type()
 
-	impl, err := c.getInstanceByInterface(ifaceType)
+	if ptrVal.Elem().Kind() == reflect.Interface {
+		impl, err := c.getInstanceByInterface(elemType)
+		if err != nil {
+			return err
+		}
+
+		ptrVal.Elem().Set(impl)
+
+		return nil
+	}
+
+	inst, err := c.getInstanceByType(elemType)
 	if err != nil {
 		return err
 	}
 
-	ptrVal.Elem().Set(impl)
+	ptrVal.Elem().Set(reflect.ValueOf(inst))
 
 	return nil
 }
@@ -99,7 +110,8 @@ func (c *Container) getInstanceByType(t reflect.Type) (any, error) {
 	}
 
 	for _, prov := range c.providers {
-		if prov.returnType.AssignableTo(t) || prov.returnType.Implements(t) {
+		if prov.returnType.AssignableTo(t) ||
+			(prov.returnType.Kind() == reflect.Interface && prov.returnType.Implements(t)) {
 			inst, err := c.buildInstance(prov)
 			if err != nil {
 				return reflect.Value{}, err

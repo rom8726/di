@@ -82,7 +82,7 @@ type RootSrv interface {
 	RunServices() string
 }
 
-func TestContainer_Resolve(t *testing.T) {
+func TestContainer_ResolveWithInterface(t *testing.T) {
 	c := di.New()
 	c.Provide(NewDBClient)
 	c.Provide(NewRepo)
@@ -91,6 +91,29 @@ func TestContainer_Resolve(t *testing.T) {
 	c.Provide(NewRootService)
 
 	var rootSrv RootSrv
+	err := c.Resolve(&rootSrv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual := rootSrv.RunServices()
+	expected := `Running RootService:
+Running MyService with: data
+Running MyService2 with: data`
+	if actual != expected {
+		t.Errorf("expected %q, got %q", expected, actual)
+	}
+}
+
+func TestContainer_ResolveWithoutInterface(t *testing.T) {
+	c := di.New()
+	c.Provide(NewDBClient)
+	c.Provide(NewRepo)
+	c.Provide(NewService)
+	c.Provide(NewService2)
+	c.Provide(NewRootService)
+
+	var rootSrv *RootService
 	err := c.Resolve(&rootSrv)
 	if err != nil {
 		t.Fatal(err)
