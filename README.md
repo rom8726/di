@@ -101,3 +101,69 @@ Run:
 ```bash
 go test ./...
 ```
+
+## App
+
+Using the `App` struct, you can create an application that manages the lifecycle of services within a `Container`.
+Services that implement the `Servicer` interface are automatically detected and handled.
+This enables clean and consistent startup and shutdown sequences for your application.
+
+### Servicer Interface
+```go
+type Servicer interface {
+	Start(ctx context.Context) error
+	Stop(ctx context.Context) error
+}
+```
+
+### Example Usage
+
+Here's how you can integrate `App` into your application:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/rom8726/di"
+)
+
+// Define a service that implements the Servicer interface
+type MyService struct {
+    // Dependencies
+}
+
+func NewMyService() *MyService {
+    return &MyService{}
+}
+
+func (s *MyService) Start() error {
+    fmt.Println("MyService started")
+    return nil
+}
+
+func (s *MyService) Stop() error {
+    fmt.Println("MyService stopped")
+    return nil
+}
+
+func main() {
+    ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    defer cancel()
+
+    // Create a new di Container
+    c := di.New()
+
+    // Provide your services to the Container
+    c.Provide(NewMyService)
+
+    // Create a new App with the Container
+    app := di.NewApp(c)
+
+    // Start the application
+    if err := app.Run(ctx); err != nil {
+        log.Fatalf("Failed to start app: %v", err)
+    }
+}
