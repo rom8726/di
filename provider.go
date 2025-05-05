@@ -26,7 +26,7 @@ func newProvider(constructor any) *provider {
 		paramTypes[i] = ctorType.In(i)
 	}
 
-	initFunc := func(args []interface{}) (interface{}, error) {
+	initFunc := func(args []any) (any, error) {
 		var argv []reflect.Value
 		for _, arg := range args {
 			argv = append(argv, reflect.ValueOf(arg))
