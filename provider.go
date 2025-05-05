@@ -2,16 +2,26 @@ package di
 
 import (
 	"reflect"
+	"runtime"
 )
 
-type provider struct {
+type Provider struct {
 	name       string
 	returnType reflect.Type
 	paramTypes []reflect.Type
 	initFunc   func(args []any) (any, error)
+
+	args map[reflect.Type]reflect.Value
 }
 
-func newProvider(constructor any) *provider {
+func (p *Provider) Arg(arg any) *Provider {
+	typ := reflect.TypeOf(arg)
+	p.args[typ] = reflect.ValueOf(arg)
+
+	return p
+}
+
+func newProvider(constructor any) *Provider {
 	ctor := reflect.ValueOf(constructor)
 	ctorType := ctor.Type()
 
@@ -46,10 +56,15 @@ func newProvider(constructor any) *provider {
 		return result, nil
 	}
 
-	return &provider{
-		name:       ctorType.String(),
+	return &Provider{
+		name:       getFuncName(ctor),
 		returnType: retType,
 		paramTypes: paramTypes,
 		initFunc:   initFunc,
+		args:       make(map[reflect.Type]reflect.Value),
 	}
+}
+
+func getFuncName(fval reflect.Value) string {
+	return runtime.FuncForPC(fval.Pointer()).Name()
 }

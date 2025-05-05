@@ -8,7 +8,7 @@ import (
 
 type Container struct {
 	mu        sync.Mutex
-	providers []*provider
+	providers []*Provider
 	instances map[reflect.Type]reflect.Value
 }
 
@@ -18,7 +18,7 @@ func New() *Container {
 	}
 }
 
-func (c *Container) Provide(constructor any) {
+func (c *Container) Provide(constructor any) *Provider {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -30,6 +30,8 @@ func (c *Container) Provide(constructor any) {
 	}
 
 	c.providers = append(c.providers, prvdr)
+
+	return prvdr
 }
 
 func (c *Container) Resolve(target any) error {
@@ -46,7 +48,7 @@ func (c *Container) Resolve(target any) error {
 	if ptrVal.Elem().Kind() == reflect.Interface {
 		impl, err := c.getInstanceByInterface(elemType)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w [target=%s]", err, getFuncName(ptrVal))
 		}
 
 		ptrVal.Elem().Set(impl)
@@ -85,12 +87,18 @@ func (c *Container) getInstanceByInterface(ifaceType reflect.Type) (reflect.Valu
 	return reflect.Value{}, fmt.Errorf("no provider found for interface %v", ifaceType)
 }
 
-func (c *Container) buildInstance(p *provider) (reflect.Value, error) {
+func (c *Container) buildInstance(p *Provider) (reflect.Value, error) {
 	args := make([]any, len(p.paramTypes))
 	for i, pt := range p.paramTypes {
+		if arg, ok := p.args[pt]; ok {
+			args[i] = arg.Interface()
+
+			continue
+		}
+
 		arg, err := c.getInstanceByType(pt)
 		if err != nil {
-			return reflect.Value{}, err
+			return reflect.Value{}, fmt.Errorf("%w [constructor: %s]", err, p.name)
 		}
 
 		args[i] = arg
@@ -123,5 +131,5 @@ func (c *Container) getInstanceByType(t reflect.Type) (any, error) {
 		}
 	}
 
-	return reflect.Value{}, fmt.Errorf("no provider found for type %v", t)
+	return reflect.Value{}, fmt.Errorf("no provider\\arg found for type %v", t)
 }

@@ -8,61 +8,80 @@ import (
 )
 
 type DBClient interface {
-	Exec() error
+	Exec() (string, error)
 }
 
-type DBClientImpl struct{}
+type DBClientImpl struct {
+	data string
+}
 
-func (c *DBClientImpl) Exec() error { return nil }
+func (c *DBClientImpl) Exec() (string, error) { return c.data, nil }
 
-func NewDBClient() *DBClientImpl {
-	return &DBClientImpl{}
+func NewDBClient(data string) *DBClientImpl {
+	return &DBClientImpl{data: data}
 }
 
 type Repo interface {
-	Find() string
+	Find() (string, error)
 }
 
 type RepoImpl struct {
 	db DBClient
 }
 
-func (r *RepoImpl) Find() string { return "data" }
+func (r *RepoImpl) Find() (string, error) { return r.db.Exec() }
 
 func NewRepo(db DBClient) *RepoImpl {
 	return &RepoImpl{db: db}
 }
 
 type Service interface {
-	Run() string
+	Run() (string, error)
 }
 
 type MyService struct {
-	repo Repo
+	params *MyServiceParams
+	repo   Repo
 }
 
-func NewService(r Repo) *MyService {
-	return &MyService{repo: r}
+type MyServiceParams struct {
+	ParamInt  int
+	ParamStr  string
+	ParamBool bool
 }
 
-func (s *MyService) Run() string {
-	return fmt.Sprint("Running MyService with: ", s.repo.Find())
+func NewMyService(params *MyServiceParams, r Repo) *MyService {
+	return &MyService{params: params, repo: r}
+}
+
+func (s *MyService) Run() (string, error) {
+	data, err := s.repo.Find()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Running MyService(%+v) with: %s", s.params, data), nil
 }
 
 type Service2 interface {
-	Run2() string
+	Run2() (string, error)
 }
 
 type MyService2 struct {
 	repo Repo
 }
 
-func NewService2(r Repo) *MyService2 {
+func NewMyService2(r Repo) *MyService2 {
 	return &MyService2{repo: r}
 }
 
-func (s *MyService2) Run2() string {
-	return fmt.Sprint("Running MyService2 with: ", s.repo.Find())
+func (s *MyService2) Run2() (string, error) {
+	data, err := s.repo.Find()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprint("Running MyService2 with: ", data), nil
 }
 
 type RootService struct {
@@ -75,7 +94,10 @@ func NewRootService(s Service, s2 Service2) *RootService {
 }
 
 func (s *RootService) RunServices() string {
-	return fmt.Sprintf("Running RootService:\n%s\n%s", s.service.Run(), s.service2.Run2())
+	data1, _ := s.service.Run()
+	data2, _ := s.service2.Run2()
+
+	return fmt.Sprintf("Running RootService:\n%s\n%s", data1, data2)
 }
 
 type RootSrv interface {
@@ -84,10 +106,10 @@ type RootSrv interface {
 
 func TestContainer_ResolveWithInterface(t *testing.T) {
 	c := di.New()
-	c.Provide(NewDBClient)
+	c.Provide(NewDBClient).Arg("data")
 	c.Provide(NewRepo)
-	c.Provide(NewService)
-	c.Provide(NewService2)
+	c.Provide(NewMyService).Arg(&MyServiceParams{ParamInt: 1, ParamStr: "str", ParamBool: true})
+	c.Provide(NewMyService2)
 	c.Provide(NewRootService)
 
 	var rootSrv RootSrv
@@ -98,7 +120,7 @@ func TestContainer_ResolveWithInterface(t *testing.T) {
 
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
-Running MyService with: data
+Running MyService(&{ParamInt:1 ParamStr:str ParamBool:true}) with: data
 Running MyService2 with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
@@ -107,10 +129,10 @@ Running MyService2 with: data`
 
 func TestContainer_ResolveWithoutInterface(t *testing.T) {
 	c := di.New()
-	c.Provide(NewDBClient)
+	c.Provide(NewDBClient).Arg("data")
 	c.Provide(NewRepo)
-	c.Provide(NewService)
-	c.Provide(NewService2)
+	c.Provide(NewMyService).Arg(&MyServiceParams{ParamInt: 1, ParamStr: "str", ParamBool: true})
+	c.Provide(NewMyService2)
 	c.Provide(NewRootService)
 
 	var rootSrv *RootService
@@ -121,7 +143,7 @@ func TestContainer_ResolveWithoutInterface(t *testing.T) {
 
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
-Running MyService with: data
+Running MyService(&{ParamInt:1 ParamStr:str ParamBool:true}) with: data
 Running MyService2 with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
