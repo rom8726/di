@@ -10,6 +10,8 @@ type Container struct {
 	mu        sync.Mutex
 	providers []*Provider
 	instances map[reflect.Type]reflect.Value
+
+	instancesList []any
 }
 
 func New() *Container {
@@ -108,6 +110,8 @@ func (c *Container) buildInstance(p *Provider) (reflect.Value, error) {
 	if err != nil {
 		return reflect.Value{}, err
 	}
+
+	c.instancesList = append(c.instancesList, result)
 
 	return reflect.ValueOf(result), nil
 }
