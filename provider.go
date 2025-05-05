@@ -16,6 +16,10 @@ type Provider struct {
 
 func (p *Provider) Arg(arg any) *Provider {
 	typ := reflect.TypeOf(arg)
+	if _, ok := p.args[typ]; ok {
+		panic("duplicate arg type")
+	}
+
 	p.args[typ] = reflect.ValueOf(arg)
 
 	return p
