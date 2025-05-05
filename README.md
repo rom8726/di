@@ -10,7 +10,6 @@ Inspired by https://github.com/ivankorobkov/go-di
 * ✅ Automatic dependency resolution via reflection
 * ✅ Support for interfaces (implementation matched automatically)
 * ✅ Manual argument injection for primitives or configs
-* ✅ Lazy singleton instantiation
 * ❌ No lazy-loading of constructors — instances created when first resolved
 
 ## Installation
