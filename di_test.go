@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/rom8726/di"
 )
 
@@ -117,9 +119,7 @@ func TestContainer_ResolveWithInterface(t *testing.T) {
 
 	var rootSrv RootSrv
 	err := c.Resolve(&rootSrv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
@@ -140,9 +140,7 @@ func TestContainer_ResolveWithoutInterface(t *testing.T) {
 
 	var rootSrv *RootService
 	err := c.Resolve(&rootSrv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
@@ -151,4 +149,31 @@ Running MyService2(int: 2, bool: true) with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
+}
+
+func TestContainer_ResolveToStruct(t *testing.T) {
+	c := di.New()
+	c.Provide(NewDBClient).Arg("data")
+	c.Provide(NewRepo)
+	c.Provide(NewMyService).Arg(&MyServiceParams{ParamInt: 1, ParamStr: "str", ParamBool: true})
+	c.Provide(NewMyService2).Args(2, true)
+	c.Provide(NewRootService)
+
+	type Holder struct {
+		DBClient *DBClientImpl
+		Repo     *RepoImpl
+		Service  *MyService
+		Service2 *MyService2
+		Root     *RootService
+	}
+
+	var holder Holder
+	err := c.ResolveToStruct(&holder)
+	require.NoError(t, err)
+
+	require.NotNil(t, holder.DBClient)
+	require.NotNil(t, holder.Repo)
+	require.NotNil(t, holder.Service)
+	require.NotNil(t, holder.Service2)
+	require.NotNil(t, holder.Root)
 }
