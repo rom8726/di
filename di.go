@@ -68,6 +68,38 @@ func (c *Container) Resolve(target any) error {
 	return nil
 }
 
+func (c *Container) ResolveToStruct(target any) error {
+	ptrVal := reflect.ValueOf(target)
+
+	if ptrVal.Kind() != reflect.Ptr {
+		return fmt.Errorf("target must be a pointer")
+	}
+
+	elemVal := ptrVal.Elem()
+
+	if elemVal.Kind() != reflect.Struct {
+		return fmt.Errorf("target must point to a struct")
+	}
+
+	elemType := elemVal.Type()
+	for i := 0; i < elemType.NumField(); i++ {
+		field := elemType.Field(i)
+		fieldValue := elemVal.Field(i)
+
+		if !fieldValue.CanSet() {
+			continue
+		}
+
+		fieldValuePtr := fieldValue.Addr().Interface()
+
+		if err := c.Resolve(fieldValuePtr); err != nil {
+			return fmt.Errorf("failed to resolve field %q: %w", field.Name, err)
+		}
+	}
+
+	return nil
+}
+
 func (c *Container) getInstanceByInterface(ifaceType reflect.Type) (reflect.Value, error) {
 	if val, ok := c.instances[ifaceType]; ok {
 		return val, nil
