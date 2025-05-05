@@ -21,6 +21,19 @@ func (p *Provider) Arg(arg any) *Provider {
 	return p
 }
 
+func (p *Provider) Args(args ...any) *Provider {
+	for _, arg := range args {
+		typ := reflect.TypeOf(arg)
+		if _, ok := p.args[typ]; ok {
+			panic("duplicate arg type")
+		}
+
+		p.args[typ] = reflect.ValueOf(arg)
+	}
+
+	return p
+}
+
 func newProvider(constructor any) *Provider {
 	ctor := reflect.ValueOf(constructor)
 	ctorType := ctor.Type()

@@ -69,10 +69,13 @@ type Service2 interface {
 
 type MyService2 struct {
 	repo Repo
+
+	paramInt  int
+	paramBool bool
 }
 
-func NewMyService2(r Repo) *MyService2 {
-	return &MyService2{repo: r}
+func NewMyService2(paramInt int, paramBool bool, r Repo) *MyService2 {
+	return &MyService2{repo: r, paramInt: paramInt, paramBool: paramBool}
 }
 
 func (s *MyService2) Run2() (string, error) {
@@ -81,7 +84,7 @@ func (s *MyService2) Run2() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprint("Running MyService2 with: ", data), nil
+	return fmt.Sprintf("Running MyService2(int: %d, bool: %v) with: %s", s.paramInt, s.paramBool, data), nil
 }
 
 type RootService struct {
@@ -109,7 +112,7 @@ func TestContainer_ResolveWithInterface(t *testing.T) {
 	c.Provide(NewDBClient).Arg("data")
 	c.Provide(NewRepo)
 	c.Provide(NewMyService).Arg(&MyServiceParams{ParamInt: 1, ParamStr: "str", ParamBool: true})
-	c.Provide(NewMyService2)
+	c.Provide(NewMyService2).Args(2, true)
 	c.Provide(NewRootService)
 
 	var rootSrv RootSrv
@@ -121,7 +124,7 @@ func TestContainer_ResolveWithInterface(t *testing.T) {
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
 Running MyService(&{ParamInt:1 ParamStr:str ParamBool:true}) with: data
-Running MyService2 with: data`
+Running MyService2(int: 2, bool: true) with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
@@ -132,7 +135,7 @@ func TestContainer_ResolveWithoutInterface(t *testing.T) {
 	c.Provide(NewDBClient).Arg("data")
 	c.Provide(NewRepo)
 	c.Provide(NewMyService).Arg(&MyServiceParams{ParamInt: 1, ParamStr: "str", ParamBool: true})
-	c.Provide(NewMyService2)
+	c.Provide(NewMyService2).Args(2, true)
 	c.Provide(NewRootService)
 
 	var rootSrv *RootService
@@ -144,7 +147,7 @@ func TestContainer_ResolveWithoutInterface(t *testing.T) {
 	actual := rootSrv.RunServices()
 	expected := `Running RootService:
 Running MyService(&{ParamInt:1 ParamStr:str ParamBool:true}) with: data
-Running MyService2 with: data`
+Running MyService2(int: 2, bool: true) with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
