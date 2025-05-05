@@ -2,6 +2,8 @@
 
 Minimalistic, reflection-based Dependency Injection (DI) framework for GoLang.
 
+Inspired by https://github.com/ivankorobkov/go-di
+
 ## Features
 
 * ✅ Constructor-based registration
