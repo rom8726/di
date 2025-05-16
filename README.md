@@ -23,6 +23,10 @@ go get github.com/rom8726/di
 ### 1. Define your interfaces and implementations
 
 ```go
+type DBClient interface {
+	Exec() (string, error)
+}
+
 type Repo interface {
 	Find() (string, error)
 }
