@@ -12,11 +12,13 @@ type Container struct {
 	instances map[reflect.Type]reflect.Value
 
 	instancesList []any
+	resolvedMap   map[reflect.Type]struct{}
 }
 
 func New() *Container {
 	return &Container{
-		instances: make(map[reflect.Type]reflect.Value),
+		instances:   make(map[reflect.Type]reflect.Value),
+		resolvedMap: make(map[reflect.Type]struct{}),
 	}
 }
 
@@ -122,6 +124,13 @@ func (c *Container) getInstanceByInterface(ifaceType reflect.Type) (reflect.Valu
 }
 
 func (c *Container) buildInstance(p *Provider) (reflect.Value, error) {
+	if _, ok := c.resolvedMap[p.returnType]; ok {
+		return reflect.Value{}, fmt.Errorf("circular dependency detected: %v", p.name)
+	}
+
+	c.resolvedMap[p.returnType] = struct{}{}
+	defer delete(c.resolvedMap, p.returnType)
+
 	args := make([]any, len(p.paramTypes))
 	for i, pt := range p.paramTypes {
 		if arg, ok := p.args[pt]; ok {

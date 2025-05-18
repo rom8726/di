@@ -109,6 +109,39 @@ type RootSrv interface {
 	RunServices() string
 }
 
+// ---circular deps ---
+type Dep1 interface {
+	Do1()
+}
+
+type Dep2 interface {
+	Do2()
+}
+
+type Dep1Impl struct {
+	dep2 Dep2
+}
+
+func newDep1(dep2 Dep2) *Dep1Impl {
+	return &Dep1Impl{dep2: dep2}
+}
+
+func (d *Dep1Impl) Do1() {
+	d.dep2.Do2()
+}
+
+type Dep2Impl struct {
+	dep1 Dep1
+}
+
+func newDep2(dep1 Dep1) *Dep2Impl {
+	return &Dep2Impl{dep1: dep1}
+}
+
+func (d *Dep2Impl) Do2() {
+	d.dep1.Do1()
+}
+
 func TestContainer_ResolveWithInterface(t *testing.T) {
 	c := di.New()
 	c.Provide(NewDBClient).Arg("data")
@@ -149,6 +182,16 @@ Running MyService2(int: 2, bool: true) with: data`
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
+}
+
+func TestContainer_ResolveWithCircularDep(t *testing.T) {
+	c := di.New()
+	c.Provide(newDep1)
+	c.Provide(newDep2)
+
+	var dep1 Dep1
+	err := c.Resolve(&dep1)
+	require.Error(t, err)
 }
 
 func TestContainer_ResolveToStruct(t *testing.T) {
