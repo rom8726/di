@@ -1,5 +1,9 @@
 # di
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/rom8726/di.svg)](https://pkg.go.dev/github.com/rom8726/di)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rom8726/di)](https://goreportcard.com/report/github.com/rom8726/di)
+
+
 Minimalistic, reflection-based Dependency Injection (DI) framework for GoLang.
 
 Inspired by https://github.com/ivankorobkov/go-di
