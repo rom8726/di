@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/rom8726/di.svg)](https://pkg.go.dev/github.com/rom8726/di)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rom8726/di)](https://goreportcard.com/report/github.com/rom8726/di)
-
+[![Coverage Status](https://coveralls.io/repos/github/rom8726/di/badge.svg?branch=main)](https://coveralls.io/github/rom8726/di?branch=main)
 
 Minimalistic, reflection-based Dependency Injection (DI) framework for GoLang.
 
