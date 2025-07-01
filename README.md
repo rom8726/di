@@ -4,6 +4,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rom8726/di)](https://goreportcard.com/report/github.com/rom8726/di)
 [![Coverage Status](https://coveralls.io/repos/github/rom8726/di/badge.svg?branch=main)](https://coveralls.io/github/rom8726/di?branch=main)
 
+[![boosty-cozy](https://gideonwhite1029.github.io/badges/cozy-boosty_vector.svg)](https://boosty.to/dev-tools-hacker)
+
 Minimalistic, reflection-based Dependency Injection (DI) framework for GoLang.
 
 Inspired by https://github.com/ivankorobkov/go-di
